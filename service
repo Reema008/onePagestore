@@ -1,0 +1,199 @@
+import { OnInit,Output } from "@angular/core";
+import { EventEmitter } from '@angular/core';
+import { products } from "../item.interface";
+
+export class CartService {
+    
+     cartAdding  = new EventEmitter();
+     total_amount:number=0;
+     products_count  = 0;
+     price=0;
+     final:number;
+    constructor(){}
+     productListData:products[] = [
+    {
+      id:1,
+      item:"Nike Shoes",
+      price:2000
+    },
+    {
+      id:2,
+      item:"SkyBags--Back Pack",
+      price:1000
+    },
+    {
+      id:3,
+      item:"Ray Ban Glasses",
+      price:1000
+    },
+    {
+      id:4,
+      item:"Levis Jeans",
+      price:1500
+    },
+    {
+      id:5,
+      item:"Rolex Watch",
+      price:3000
+    }
+  ]
+    AddCart(item:products){
+    this.total_amount +=item.price;
+    return this.total_amount;
+    }
+    DeleteCart(product,id:number){
+      
+    this.total_amount -=product.price
+    return this.total_amount;
+    
+    }
+   
+    products_list(){
+        return this.productListData;
+    }
+
+}
+
+//catalog.ts
+
+import { Component, OnInit,Output,EventEmitter,Input } from '@angular/core';
+import { products } from "../item.interface";
+import { CartService } from "../shared/cart.service";
+
+@Component({
+  selector: 'app-catalog',
+  templateUrl: './catalog.component.html',
+  styleUrls: ['./catalog.component.css']
+})
+export class CatalogComponent implements OnInit {
+  //let productsList:products[] = [];
+  catalog =[];total:number=0;cart:products[]= [];
+  constructor(private cartService:CartService){
+  }
+  ngOnInit(){
+    this.catalog= this.cartService.products_list();
+  }
+  
+  
+  @Output() data =new EventEmitter();
+  @Output() tot =new EventEmitter();
+
+
+  
+  addToCart(cartItem:products){
+    this.total=this.cartService.AddCart(cartItem);
+   
+    this.cart.push(cartItem);
+   
+     this.data.emit(this.cart);
+     
+     this.tot.emit(this.total);
+  }
+ 
+  
+
+}
+
+
+//cart.ts
+
+import { Component, OnInit,Input, Output, EventEmitter } from '@angular/core';
+import { CartService } from "../shared/cart.service";
+import { products } from "../item.interface";
+@Component({
+  selector: 'app-cart',
+  templateUrl: './cart.component.html',
+  styleUrls: ['./cart.component.css']
+  
+})
+export class CartComponent implements OnInit {
+  cart:products[];
+  total:number;
+  constructor(private cartService:CartService){
+    
+  }
+      ngOnInit(): void {
+      
+      }
+
+  @Input() public data:object[];
+  // @Input() amt;
+  @Output() public pri=new EventEmitter();
+  //index:number
+
+ 
+  delByID(item:any,id:number){
+    // console.log(this.tot);
+    // console.log(item);
+    this.total=this.cartService.DeleteCart(item,id);
+      
+    this.data.splice(id,1);
+    // this.tot=this.tot-amt;
+    // console.log(this.data);
+    this.pri.emit(this.total);
+    
+    // console.log(this.pri);
+  }
+
+}
+
+
+//checkout.ts
+
+import { Component, OnInit,Input ,Output,EventEmitter} from '@angular/core';
+import { CartService } from "../shared/cart.service";
+
+@Component({
+  selector: 'app-checkout',
+  templateUrl: './checkout.component.html',
+  styleUrls: ['./checkout.component.css']
+})
+export class CheckoutComponent{
+  @Input() final; 
+
+}
+
+
+// export class CheckoutComponent implements OnInit{
+//   @Input() final; 
+//   constructor(private cartService:CartService){
+//   }
+//   ngOnInit(){
+//     this.final= this.cartService.total_amount;
+//   }
+
+// }
+
+
+//app.ts
+
+import { Component } from '@angular/core';
+
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent {
+  orders;
+  amount;
+  amountfunction(amount:any){
+    this.amount = amount; 
+    console.log(amount);
+    
+  }
+}
+
+
+
+//app.html
+
+<!--The content below is only a placeholder and can be replaced.-->
+<!-- <app-store></app-store>
+<router-outlet></router-outlet> -->
+
+<app-catalog (data)='orders=$event' (tot)='amount=$event'></app-catalog>
+<app-cart  [data]="orders" (pri)='amount=$event'></app-cart>
+<app-checkout [final]="amount"></app-checkout>
+
